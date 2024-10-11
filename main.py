@@ -22,6 +22,10 @@ def clean_data(data):
             # decide if desc is necessary field
             trip['num_changes'] = 0
 
+def check_data_fields(df, weights):
+    for data_field in weights.keys():
+        assert data_field in df.columns
+
 def normalize(df):
     columns=['co2_kg', 'price_eur', 'duration_out_sec']
     for col in columns:
@@ -65,6 +69,7 @@ def rank_trips(fname, weights_fname, out_name):
     clean_data(data)
 
     df = pd.DataFrame(data)
+    check_data_fields(df, weights)
     normalize(df)
 
     compute_ranking(df, weights)
