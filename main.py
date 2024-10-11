@@ -17,7 +17,6 @@ def read_weights(fname):
 def clean_data(data):
     for trip in data:
         # TODO manage return trips
-        del trip["boo_return"]
         if "desc" in trip.keys():
             num_changes = len(trip["desc"].split("dep"))
             assert num_changes == len(
@@ -25,7 +24,6 @@ def clean_data(data):
             ), f"Inconsistent description for trip {trip[id]}: number of arrivals and departures differs"
             # if there was no dep&arr hints in the description, assume no changes
             trip["num_changes"] = max(0, num_changes - 2)
-            del trip["desc"]
         else:
             trip["num_changes"] = 0
 
@@ -65,13 +63,13 @@ def compute_preference_matrix(df, weights):
     return pref_mtx
 
 
-def compute_ranking(df, weights):
+def compute_score(df, weights):
     pref_mtx = compute_preference_matrix(df, weights)
     pos_flow = pref_mtx.sum(axis=1) / (df.shape[0] - 1)
     neg_flow = pref_mtx.sum(axis=0) / (df.shape[0] - 1)
     net_flow = pos_flow - neg_flow
 
-    df["rank"] = net_flow
+    df["score"] = net_flow
 
 
 def rank_trips(fname, weights_fname, out_name):
@@ -84,17 +82,12 @@ def rank_trips(fname, weights_fname, out_name):
     check_data_fields(df, weights)
     normalize(df)
 
-    compute_ranking(df, weights)
+    compute_score(df, weights)
 
-    # sort the original json data based on computed ranks in dataframe
-    # TODO add rank and score to the output data
-    sorted_ids = df.sort_values(by="rank")["id"]
-    order_map = {value: index for index, value in enumerate(sorted_ids)}
-    with open(fname, "r") as file:
-        data = json.load(file)
-    sorted_data = sorted(data, key=lambda x: order_map[x["id"]])
-    with open(out_name, "w") as file:
-        json.dump(sorted_data, file, indent=4)
+    df["rank"] = df["score"].rank(method="max", ascending=False)
+    # if want to save sorted data
+    # df = df.sort_values(by="rank")
+    df.to_json(out_name, orient="records")
 
 
 def main():
