@@ -1,0 +1,7 @@
+{
+    "co2_kg": 0.1,
+    "price_eur": 0.4,
+    "workTime_sec": 0.2,
+    "duration_out_sec": 0.2,
+    "num_changes": 0.1
+}

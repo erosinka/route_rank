@@ -1,12 +1,15 @@
 import numpy as np
 import pandas as pd
 import json
+import math
 
 
-# TODO: either user input or read from file
-# assert that weigts sum to 1
-weights = {'co2_kg': 0.1, 'price_eur': 0.4, 'workTime_sec': 0.2,
-           'duration_out_sec': 0.2, 'num_changes': 0.1} 
+def read_weights(fname):
+    with open(fname, 'r') as file:
+        weights = json.load(file)
+    w_sum = sum(weights.values())
+    assert math.isclose(w_sum, 1.0, rel_tol=1e-9), f'Weights should sum up to 1.0, not {w_sum}'
+    return weights
 
 def clean_data(data):
     for trip in data:
@@ -55,7 +58,8 @@ def compute_ranking(df, weights):
     df['rank'] = net_flow
 
 
-def rank_trips(fname):
+def rank_trips(fname, weights_fname, out_name):
+    weights = read_weights(weights_fname)
     with open(fname, 'r') as file:
         data = json.load(file)
     clean_data(data)
@@ -64,18 +68,21 @@ def rank_trips(fname):
     normalize(df)
 
     compute_ranking(df, weights)
- 
+
+    # sort the original json data based on computed ranks in dataframe
     sorted_ids = df.sort_values(by='rank')['id']
     order_map = {value: index for index, value in enumerate(sorted_ids)}
     with open(fname, 'r') as file:
         data = json.load(file)
     sorted_data = sorted(data, key=lambda x: order_map[x['id']])
-    with open('data/sorted.json', 'w') as file:
+    with open(out_name, 'w') as file:
         json.dump(sorted_data, file, indent=4)
 
 def main():
     fname = 'data/ex3-data.json'
-    rank_trips(fname)
+    out_name = 'data/sorted.json'
+    weights_fname = 'data/weights.json'
+    rank_trips(fname, weights_fname, out_name)
 
 if __name__ == "__main__":
     main()
