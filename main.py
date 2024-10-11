@@ -13,13 +13,15 @@ def read_weights(fname):
 
 def clean_data(data):
     for trip in data:
-        # TODO manage these fields in df
+        # TODO manage return trips
         del trip['boo_return']
         if 'desc' in trip.keys():
-            trip['num_changes'] = len(trip['desc'].split('dep')) - 2
+            num_changes = len(trip['desc'].split('dep'))
+            assert num_changes == len(trip['desc'].split('arr')), f'Inconsistent description for trip {trip[id]}: number of arrivals and departures differs'
+            # if there was no dep&arr hints in the description, assume no changes
+            trip['num_changes'] = max(0, num_changes - 2)
             del trip['desc']
         else:
-            # decide if desc is necessary field
             trip['num_changes'] = 0
 
 def check_data_fields(df, weights):
@@ -75,6 +77,7 @@ def rank_trips(fname, weights_fname, out_name):
     compute_ranking(df, weights)
 
     # sort the original json data based on computed ranks in dataframe
+    # TODO add rank and score to the output data
     sorted_ids = df.sort_values(by='rank')['id']
     order_map = {value: index for index, value in enumerate(sorted_ids)}
     with open(fname, 'r') as file:
