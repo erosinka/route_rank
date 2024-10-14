@@ -48,9 +48,13 @@ def read_weights(fname: str) -> Dict[str, float]:
     return weights
 
 
-def clean_data(data: List[Dict]):
+def add_changes(data: List[Dict]):
+    """Derives number of changes from the description and adds it as a field
+
+    Args:
+        data (List[Dict]): input data
+    """
     for trip in data:
-        # TODO manage return trips
         if "desc" in trip.keys():
             num_changes = len(trip["desc"].split("dep"))
             assert num_changes == len(
@@ -178,10 +182,13 @@ def rank_trips(fname: str, weights_fname: str, out_name: str):
     data = read_input_data(fname)
     assert len(data) > 0, f"The input data is empty \n"
     data_original = copy.deepcopy(data)
-    clean_data(data)
+    add_changes(data)
 
     df = pd.DataFrame(data)
     check_data_fields(df, weights)
+    assert (
+        len(df["boo_return"].unique()) == 1
+    ), f"Input data is not consistent and has a mix of one-way and return trips."
     normalize(df)
 
     compute_score(df, weights)
