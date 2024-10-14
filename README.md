@@ -14,3 +14,7 @@ $ python main.py [-h] filename [sorted]
 ```
 
 where `filename` is a relative path to the input `json` file and `sorted` is an optional boolean argument. Its value is `False` by defaut, ff `True` then the output data is sorted. The output saved to the `data/output.json`. Input file should not be empty, and trips are expected to be all _one-way_ or _return_.
+
+## output
+
+Ouput data is saved to `data/ouput.json` file containing the input data with fields `rank` and `score` added. Higher score corresponds to higher rank where 1 is the highert rank.
