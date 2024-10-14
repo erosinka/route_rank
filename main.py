@@ -216,7 +216,7 @@ def main():
     )
     args = parser.parse_args()
     in_name = args.filename
-    out_name = "data/output.json"
+    out_name = "data/ex3-output.json"
     weights_fname = "data/weights.json"
     is_sorted = args.sorted
     rank_trips(in_name, weights_fname, out_name, is_sorted)
