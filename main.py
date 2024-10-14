@@ -1,9 +1,32 @@
+import argparse
 import copy
 import numpy as np
 import pandas as pd
 import json
 import math
 from typing import Dict, List
+
+
+def read_input_data(fname: str) -> List[Dict]:
+    """Read json file specified by the name and process errors
+
+    Args:
+        fname (str): relative path to the input file
+
+    Returns:
+        List[Dict]: the data from the file
+    """
+    data = []
+    try:
+        with open(fname, "r") as file:
+            data = json.load(file)
+    except FileNotFoundError:
+        print(f"Error: The file '{fname}' does not exist.")
+    except json.JSONDecodeError:
+        print(f"Error: The file '{fname}' is not a valid JSON file.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    return data
 
 
 def read_weights(fname: str) -> Dict[str, float]:
@@ -16,8 +39,8 @@ def read_weights(fname: str) -> Dict[str, float]:
     Returns:
         Dict[str, float]: dictionary with criteria weights as values
     """
-    with open(fname, "r") as file:
-        weights = json.load(file)
+
+    weights = read_input_data(fname)
     w_sum = sum(weights.values())
     assert math.isclose(
         w_sum, 1.0, rel_tol=1e-9
@@ -150,9 +173,8 @@ def rank_trips(fname: str, weights_fname: str, out_name: str):
         out_name (str): file path where to save output json data
     """
     weights = read_weights(weights_fname)
-    with open(fname, "r") as file:
-        data = json.load(file)
-    assert len(data) > 0, f"The input data file {fname} is empty \n"
+    data = read_input_data(fname)
+    assert len(data) > 0, f"The input data is empty \n"
     data_original = copy.deepcopy(data)
     clean_data(data)
 
@@ -170,10 +192,15 @@ def rank_trips(fname: str, weights_fname: str, out_name: str):
 
 
 def main():
-    fname = "data/ex3-data.json"
+    parser = argparse.ArgumentParser(
+        description="Read a file with trip descriptions and rank teh trips"
+    )
+    parser.add_argument("filename", help="The relative path to the input json file")
+    args = parser.parse_args()
+    in_name = args.filename
     out_name = "data/sorted.json"
     weights_fname = "data/weights.json"
-    rank_trips(fname, weights_fname, out_name)
+    rank_trips(in_name, weights_fname, out_name)
 
 
 if __name__ == "__main__":
