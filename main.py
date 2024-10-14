@@ -169,7 +169,7 @@ def compute_score(df: pd.DataFrame, weights: Dict[str, float]):
     df["score"] = net_flow
 
 
-def rank_trips(fname: str, weights_fname: str, out_name: str):
+def rank_trips(fname: str, weights_fname: str, out_name: str, is_sorted: bool):
     """Reads input file with trip info and saves to json file
         output data with rank and score information added
 
@@ -177,9 +177,11 @@ def rank_trips(fname: str, weights_fname: str, out_name: str):
         fname (str): path to the input json file with data to be ranked
         weights_fname (str): path to file with weights for input data
         out_name (str): file path where to save output json data
+        is_sorted (bool): True if output data should be sorted, False otherwise
     """
     weights = read_weights(weights_fname)
     data = read_input_data(fname)
+
     assert len(data) > 0, f"The input data is empty \n"
     data_original = copy.deepcopy(data)
     add_changes(data)
@@ -195,8 +197,8 @@ def rank_trips(fname: str, weights_fname: str, out_name: str):
     df_original = pd.DataFrame(data_original)
     df_original["score"] = df["score"]
     df_original["rank"] = df_original["score"].rank(method="max", ascending=False)
-    # if want to save sorted data
-    # df_original = df_original.sort_values(by="rank")
+    if is_sorted:
+        df_original = df_original.sort_values(by="rank", ascending=True)
     df_original.to_json(out_name, orient="records")
 
 
@@ -205,11 +207,19 @@ def main():
         description="Read a file with trip descriptions and rank teh trips"
     )
     parser.add_argument("filename", help="The relative path to the input json file")
+    parser.add_argument(
+        "sorted",
+        nargs="?",
+        type=bool,
+        default=False,
+        help="True output data should be sorted by rank",
+    )
     args = parser.parse_args()
     in_name = args.filename
-    out_name = "data/sorted.json"
+    out_name = "data/output.json"
     weights_fname = "data/weights.json"
-    rank_trips(in_name, weights_fname, out_name)
+    is_sorted = args.sorted
+    rank_trips(in_name, weights_fname, out_name, is_sorted)
 
 
 if __name__ == "__main__":
