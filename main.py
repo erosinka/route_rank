@@ -6,6 +6,15 @@ from typing import Dict, List
 
 
 def read_weights(fname: str) -> Dict[str, float]:
+    """Read json file with weights for trip criteria
+        and checks that they sum up to 1.
+
+    Args:
+        fname (str): path to the input json file
+
+    Returns:
+        Dict[str, float]: dictionary with criteria weights as values
+    """
     with open(fname, "r") as file:
         weights = json.load(file)
     w_sum = sum(weights.values())
@@ -30,6 +39,12 @@ def clean_data(data: List[Dict]):
 
 
 def check_data_fields(df: pd.DataFrame, weights: Dict[str, float]):
+    """Check that weights keys correspond to data field names
+
+    Args:
+        df (pd.DataFrame): dataframe with trips data
+        weights (Dict[str, float]): weights for criteria
+    """
     for data_field in weights.keys():
         assert data_field in df.columns
 
@@ -41,7 +56,6 @@ def normalize(df: pd.DataFrame):
     Args:
         df (pd.DataFrame): dataframe with input data
     """
-    
     columns = ["co2_kg", "price_eur", "duration_out_sec", "num_changes"]
     for col in columns:
         if df[col].max() != df[col].min():
@@ -58,10 +72,34 @@ def normalize(df: pd.DataFrame):
 
 # TODO choose best
 def preference_func(diff: float) -> float:
+    """Preference function that reflects how much
+        preference one alternative has over another
+
+    Args:
+        diff (float): the difference between 2 alternatives
+
+    Returns:
+        float: preference value
+    """
     return max(0, diff)
 
 
-def compute_preference_matrix(df: pd.DataFrame, weights: Dict[str, float]) -> np.ndarray:
+def compute_preference_matrix(
+    df: pd.DataFrame, weights: Dict[str, float]
+) -> np.ndarray:
+    """Compute a preference index for each criterion
+        for each pair of alternatives, reflecting the
+        extent to which one alternative is preferred
+        over the other based on the preference function
+
+    Args:
+        df (pd.DataFrame): input data
+        weights (Dict[str, float]): weights for criteria
+
+    Returns:
+        np.ndarray: preference matrix with the size of
+        (num trips, num trips)
+    """
     num_trips = df.shape[0]
     columns = weights.keys()
     pref_mtx = np.zeros((num_trips, num_trips))
@@ -78,8 +116,20 @@ def compute_preference_matrix(df: pd.DataFrame, weights: Dict[str, float]) -> np
 
 
 def compute_score(df: pd.DataFrame, weights: Dict[str, float]):
+    """Computes and adds a score column to the input data
+        using provided weights for criteria that should be
+        used for scoring. Score computation is based on the
+        PROMETHEE (Preference Ranking Organization Method
+        for Enrichment Evaluations)
+
+    Args:
+        df (pd.DataFrame): input data to be scored
+        weights (Dict[str, float]): weights for criteria
+    """
     pref_mtx = compute_preference_matrix(df, weights)
+    # how much the alternative is preferred over the others
     pos_flow = pref_mtx.sum(axis=1) / (df.shape[0] - 1)
+    # how much the alternative is outranked by all others
     neg_flow = pref_mtx.sum(axis=0) / (df.shape[0] - 1)
     net_flow = pos_flow - neg_flow
 
@@ -87,6 +137,14 @@ def compute_score(df: pd.DataFrame, weights: Dict[str, float]):
 
 
 def rank_trips(fname: str, weights_fname: str, out_name: str):
+    """Reads input file with trip info and saves to json file
+        output data with rank and score information added
+
+    Args:
+        fname (str): path to the input json file with data to be ranked
+        weights_fname (str): path to file with weights for input data
+        out_name (str): file path where to save output json data
+    """
     weights = read_weights(weights_fname)
     with open(fname, "r") as file:
         data = json.load(file)
