@@ -99,6 +99,7 @@ def normalize(df: pd.DataFrame):
 def preference_func(alt_a: float, alt_b: float) -> float:
     """Preference function that reflects how much
         preference one alternative has over another
+        where lower value of alternative is more preferable
 
     Args:
         alt_a (float): first alternative
@@ -107,7 +108,7 @@ def preference_func(alt_a: float, alt_b: float) -> float:
     Returns:
         float: preference value
     """
-    return max(0, alt_a - alt_b)
+    return max(0, alt_b - alt_a)
 
 
 def compute_preference_matrix(
