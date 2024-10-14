@@ -35,12 +35,25 @@ def check_data_fields(df: pd.DataFrame, weights: Dict[str, float]):
 
 
 def normalize(df: pd.DataFrame):
-    columns = ["co2_kg", "price_eur", "duration_out_sec"]
+    """Apply min-max normalization to input data
+        for minimization problem
+
+    Args:
+        df (pd.DataFrame): dataframe with input data
+    """
+    
+    columns = ["co2_kg", "price_eur", "duration_out_sec", "num_changes"]
     for col in columns:
-        df[col] = (df[col] - df[col].min()) / (df[col].max() - df[col].min())
+        if df[col].max() != df[col].min():
+            df[col] = (df[col] - df[col].min()) / (df[col].max() - df[col].min())
+        else:
+            df[col] = 0
     # normalize work time for minimization
     col = "workTime_sec"
-    df[col] = (df[col].max() - df[col]) / (df[col].max() - df[col].min())
+    if df[col].max() != df[col].min():
+        df[col] = (df[col].max() - df[col]) / (df[col].max() - df[col].min())
+    else:
+        df[col] = 0
 
 
 # TODO choose best
