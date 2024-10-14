@@ -70,7 +70,9 @@ def check_data_fields(df: pd.DataFrame, weights: Dict[str, float]):
         weights (Dict[str, float]): weights for criteria
     """
     for data_field in weights.keys():
-        assert data_field in df.columns
+        assert (
+            data_field in df.columns
+        ), f"Error: criterion {data_field} from weights is not in the data fields"
 
 
 def normalize(df: pd.DataFrame):
