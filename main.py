@@ -128,6 +128,9 @@ def compute_score(df: pd.DataFrame, weights: Dict[str, float]):
         weights (Dict[str, float]): weights for criteria
     """
     pref_mtx = compute_preference_matrix(df, weights)
+    if df.shape[0] == 1:
+        df["score"] = 0.0
+        return
     # how much the alternative is preferred over the others
     pos_flow = pref_mtx.sum(axis=1) / (df.shape[0] - 1)
     # how much the alternative is outranked by all others
@@ -149,6 +152,7 @@ def rank_trips(fname: str, weights_fname: str, out_name: str):
     weights = read_weights(weights_fname)
     with open(fname, "r") as file:
         data = json.load(file)
+    assert len(data) > 0, f"The input data file {fname} is empty \n"
     data_original = copy.deepcopy(data)
     clean_data(data)
 
