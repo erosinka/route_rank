@@ -2,9 +2,10 @@ import numpy as np
 import pandas as pd
 import json
 import math
+from typing import Dict, List
 
 
-def read_weights(fname):
+def read_weights(fname: str) -> Dict[str, float]:
     with open(fname, "r") as file:
         weights = json.load(file)
     w_sum = sum(weights.values())
@@ -14,7 +15,7 @@ def read_weights(fname):
     return weights
 
 
-def clean_data(data):
+def clean_data(data: List[Dict]):
     for trip in data:
         # TODO manage return trips
         if "desc" in trip.keys():
@@ -28,12 +29,12 @@ def clean_data(data):
             trip["num_changes"] = 0
 
 
-def check_data_fields(df, weights):
+def check_data_fields(df: pd.DataFrame, weights: Dict[str, float]):
     for data_field in weights.keys():
         assert data_field in df.columns
 
 
-def normalize(df):
+def normalize(df: pd.DataFrame):
     columns = ["co2_kg", "price_eur", "duration_out_sec"]
     for col in columns:
         df[col] = (df[col] - df[col].min()) / (df[col].max() - df[col].min())
@@ -43,11 +44,11 @@ def normalize(df):
 
 
 # TODO choose best
-def preference_func(diff):
+def preference_func(diff: float) -> float:
     return max(0, diff)
 
 
-def compute_preference_matrix(df, weights):
+def compute_preference_matrix(df: pd.DataFrame, weights: Dict[str, float]) -> np.ndarray:
     num_trips = df.shape[0]
     columns = weights.keys()
     pref_mtx = np.zeros((num_trips, num_trips))
@@ -63,7 +64,7 @@ def compute_preference_matrix(df, weights):
     return pref_mtx
 
 
-def compute_score(df, weights):
+def compute_score(df: pd.DataFrame, weights: Dict[str, float]):
     pref_mtx = compute_preference_matrix(df, weights)
     pos_flow = pref_mtx.sum(axis=1) / (df.shape[0] - 1)
     neg_flow = pref_mtx.sum(axis=0) / (df.shape[0] - 1)
@@ -72,7 +73,7 @@ def compute_score(df, weights):
     df["score"] = net_flow
 
 
-def rank_trips(fname, weights_fname, out_name):
+def rank_trips(fname: str, weights_fname: str, out_name: str):
     weights = read_weights(weights_fname)
     with open(fname, "r") as file:
         data = json.load(file)
