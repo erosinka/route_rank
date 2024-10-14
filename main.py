@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 import pandas as pd
 import json
@@ -148,6 +149,7 @@ def rank_trips(fname: str, weights_fname: str, out_name: str):
     weights = read_weights(weights_fname)
     with open(fname, "r") as file:
         data = json.load(file)
+    data_original = copy.deepcopy(data)
     clean_data(data)
 
     df = pd.DataFrame(data)
@@ -155,11 +157,12 @@ def rank_trips(fname: str, weights_fname: str, out_name: str):
     normalize(df)
 
     compute_score(df, weights)
-
-    df["rank"] = df["score"].rank(method="max", ascending=False)
+    df_original = pd.DataFrame(data_original)
+    df_original["score"] = df["score"]
+    df_original["rank"] = df_original["score"].rank(method="max", ascending=False)
     # if want to save sorted data
-    # df = df.sort_values(by="rank")
-    df.to_json(out_name, orient="records")
+    # df_original = df_original.sort_values(by="rank")
+    df_original.to_json(out_name, orient="records")
 
 
 def main():
