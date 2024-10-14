@@ -96,18 +96,18 @@ def normalize(df: pd.DataFrame):
         df[col] = 0
 
 
-# TODO choose best
-def preference_func(diff: float) -> float:
+def preference_func(alt_a: float, alt_b: float) -> float:
     """Preference function that reflects how much
         preference one alternative has over another
 
     Args:
-        diff (float): the difference between 2 alternatives
+        alt_a (float): first alternative
+        alt_b (float): second alternative
 
     Returns:
         float: preference value
     """
-    return max(0, diff)
+    return max(0, alt_a - alt_b)
 
 
 def compute_preference_matrix(
@@ -135,8 +135,7 @@ def compute_preference_matrix(
                 continue
             pref_sum = 0
             for col in columns:
-                diff = df[col][i] - df[col][j]
-                pref_sum += weights[col] * preference_func(diff)
+                pref_sum += weights[col] * preference_func(df[col][i], df[col][j])
             pref_mtx[i, j] = pref_sum
     return pref_mtx
 
